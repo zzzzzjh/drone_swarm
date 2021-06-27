@@ -1,0 +1,10 @@
+<launch>
+	<!-- run the position_control.cpp -->
+
+	<node pkg="drone_command" type="px4_pos_controller" name="px4_pos_controller" output="screen">
+
+	<rosparam command="load" file="$(find drone_command)/config/Parameter_for_control.yaml" />
+
+	</node>
+</launch>
+

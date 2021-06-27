@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(drone_command)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -21,44 +21,25 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+
+find_package(Boost REQUIRED COMPONENTS system)
 
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
-## To declare and build messages, services or actions from within this
-## package, follow these steps:
-## * Let MSG_DEP_SET be the set of packages whose message types you use in
-##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
-## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
-##     * add a exec_depend tag for "message_runtime"
-## * In this file (CMakeLists.txt):
-##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
-##   * uncomment the add_*_files sections below as needed
-##     and list every .msg/.srv/.action file to be processed
-##   * uncomment the generate_messages entry below
-##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+  DIRECTORY msg
+  FILES
+  ControlCommand.msg
+  TrajectoryPoint.msg
+  Trajectory.msg
+  AttitudeReference.msg
+  DroneState.msg
+  Topic_for_log.msg
+  ControlOutput.msg
+  PositionReference.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -75,46 +56,19 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   mavros_msgs#   nav_msgs#   sensor_msgs#   std_msgs
-# )
-
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES drone_command
-#  CATKIN_DEPENDS geometry_msgs mavros_msgs message_generation nav_msgs roscpp sensor_msgs std_msgs std_srvs tf2_eigen tf2_ros
-#  DEPENDS system_lib
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs 
+  sensor_msgs
+  std_msgs
 )
+
+catkin_package(
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS  message_runtime
+)
+
+
 
 ###########
 ## Build ##
@@ -123,39 +77,49 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
+  include/utils
+  include/position_controller
   ${catkin_INCLUDE_DIRS}
+
 )
 
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/drone_command.cpp
-# )
+add_library(OptiTrackFeedbackRigidBody src/lib/OptiTrackFeedBackRigidBody.cpp)
+add_library(KeyboardEvent src/lib/KeyboardEvent.cpp)
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+###### Main File ##########
+##px4_pos_controller.cpp
+add_executable(px4_pos_controller src/px4_pos_controller.cpp)
+add_dependencies(px4_pos_controller drone_command_gencpp) 
+target_link_libraries(px4_pos_controller ${catkin_LIBRARIES})
 
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/drone_command_node.cpp)
+##px4_pos_estimator.cpp
+add_executable(px4_pos_estimator src/px4_pos_estimator.cpp)
+add_dependencies(px4_pos_estimator drone_command_gencpp)
+target_link_libraries(px4_pos_estimator ${catkin_LIBRARIES})
+target_link_libraries(px4_pos_estimator OptiTrackFeedbackRigidBody)
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+##px4_sender.cpp
+add_executable(px4_sender src/px4_sender.cpp)
+add_dependencies(px4_sender drone_command_gencpp)
+target_link_libraries(px4_sender ${catkin_LIBRARIES})
 
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+##px4_sender.cpp
+add_executable(gazebo_ground_truth src/gazebo_ground_truth.cpp)
+add_dependencies(gazebo_ground_truth drone_command_gencpp)
+target_link_libraries(gazebo_ground_truth ${catkin_LIBRARIES})
+##
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+add_executable(square src/Application/square.cpp)
+add_dependencies(square drone_command_gencpp)
+target_link_libraries(square ${catkin_LIBRARIES})
+
+add_executable(set_mode src/set_mode.cpp)
+add_dependencies(set_mode drone_command_gencpp)
+target_link_libraries(set_mode ${catkin_LIBRARIES})
+
+
+
 
 #############
 ## Install ##
@@ -186,18 +150,15 @@ include_directories(
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
 
 #############
 ## Testing ##
