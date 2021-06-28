@@ -116,8 +116,8 @@ int main(int argc, char **argv)
 
     //【订阅】指令
     // 本话题来自根据需求自定义的上层模块，比如track_land.cpp 比如move.cpp
+    //ros::Subscriber Command_sub = nh.subscribe<drone_command::ControlCommand>("/drone_command/control_command", 10, Command_cb);
     ros::Subscriber Command_sub = nh.subscribe<drone_command::ControlCommand>("/drone_command/control_command", 10, Command_cb);
-
     //【订阅】无人机当前状态
     // 本话题来自根据需求自定drone_pos_estimator.cpp
     ros::Subscriber drone_state_sub = nh.subscribe<drone_command::DroneState>("/drone_command/drone_state", 10, drone_state_cb);

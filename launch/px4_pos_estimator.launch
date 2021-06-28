@@ -6,4 +6,8 @@
 		<!-- load blacklist, config -->
                 <rosparam command="load" file="$(find drone_command)/config/Parameter_for_control.yaml" />
 	</node>
+	<node pkg="drone_command" type="gazebo_ground_truth" name="gazebo_ground_truth" output="screen">
+
+	
+	</node>
 </launch>

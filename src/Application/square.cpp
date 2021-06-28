@@ -46,8 +46,8 @@ int main(int argc, char **argv)
     ros::Publisher move_pub = nh.advertise<drone_command::ControlCommand>("/drone_command/control_command", 10);
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>参数读取<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    nh.param<float>("size_square", size_square, 0.5);
-    nh.param<float>("height_square", height_square, 0.5);
+    nh.param<float>("size_square", size_square, 5);
+    nh.param<float>("height_square", height_square, 5);
     nh.param<float>("sleep_time", sleep_time, 10.0);
 
 
