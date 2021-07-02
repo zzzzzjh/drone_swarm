@@ -89,32 +89,41 @@ add_library(KeyboardEvent src/lib/KeyboardEvent.cpp)
 
 ###### Main File ##########
 ##px4_pos_controller.cpp
-add_executable(px4_pos_controller src/px4_pos_controller.cpp)
+add_executable(px4_pos_controller src/single/px4_pos_controller.cpp)
 add_dependencies(px4_pos_controller drone_command_gencpp) 
 target_link_libraries(px4_pos_controller ${catkin_LIBRARIES})
 
 ##px4_pos_estimator.cpp
-add_executable(px4_pos_estimator src/px4_pos_estimator.cpp)
+add_executable(px4_pos_estimator src/single/px4_pos_estimator.cpp)
 add_dependencies(px4_pos_estimator drone_command_gencpp)
 target_link_libraries(px4_pos_estimator ${catkin_LIBRARIES})
 target_link_libraries(px4_pos_estimator OptiTrackFeedbackRigidBody)
 
 ##px4_sender.cpp
-add_executable(px4_sender src/px4_sender.cpp)
+add_executable(px4_sender src/single/px4_sender.cpp)
 add_dependencies(px4_sender drone_command_gencpp)
 target_link_libraries(px4_sender ${catkin_LIBRARIES})
 
-##px4_sender.cpp
-add_executable(gazebo_ground_truth src/gazebo_ground_truth.cpp)
+##gazebo_ground_truth.cpp
+add_executable(gazebo_ground_truth src/single/gazebo_ground_truth.cpp)
 add_dependencies(gazebo_ground_truth drone_command_gencpp)
 target_link_libraries(gazebo_ground_truth ${catkin_LIBRARIES})
 ##
+##get_uwb.cpp
+add_executable(get_uwb src/single/get_uwb.cpp)
+add_dependencies(get_uwb drone_command_gencpp)
+target_link_libraries(get_uwb ${catkin_LIBRARIES})
+
+##move.cpp
+add_executable(move src/Application/move.cpp)
+add_dependencies(move drone_command_gencpp)
+target_link_libraries(move ${catkin_LIBRARIES})
 
 add_executable(square src/Application/square.cpp)
 add_dependencies(square drone_command_gencpp)
 target_link_libraries(square ${catkin_LIBRARIES})
 
-add_executable(set_mode src/set_mode.cpp)
+add_executable(set_mode src/single/set_mode.cpp)
 add_dependencies(set_mode drone_command_gencpp)
 target_link_libraries(set_mode ${catkin_LIBRARIES})
 

@@ -101,10 +101,10 @@ void vision_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
 	
 
-	q_vio.x() = vision_pose.pose.orientation.x;
-	q_vio.y() = vision_pose.pose.orientation.y;
-	q_vio.z() = vision_pose.pose.orientation.z;
-	q_vio.w() = vision_pose.pose.orientation.w;
+	//q_vio.x() = vision_pose.pose.orientation.x;
+	//q_vio.y() = vision_pose.pose.orientation.y;
+	//q_vio.z() = vision_pose.pose.orientation.z;
+	//q_vio.w() = vision_pose.pose.orientation.w;
 
 
 	// Transform the Quaternion to Euler Angles
@@ -240,14 +240,14 @@ void send_to_fcu()
     //vicon
     if(flag_use_laser_or_vicon == 0)
     {
-        vision.pose.position.x = pos_drone_vio[1] ;
-        vision.pose.position.y = -pos_drone_vio[0] ;
+        vision.pose.position.x = pos_drone_vio[0] ;
+        vision.pose.position.y = pos_drone_vio[1] ;
         vision.pose.position.z = pos_drone_vio[2] ;
 
-        vision.pose.orientation.x = q_vio.x();
-        vision.pose.orientation.y = q_vio.y();
-        vision.pose.orientation.z = q_vio.z();
-        vision.pose.orientation.w = q_vio.w();
+        //vision.pose.orientation.x = q_vio.x();
+        //vision.pose.orientation.y = q_vio.y();
+        //vision.pose.orientation.z = q_vio.z();
+        //vision.pose.orientation.w = q_vio.w();
 
     }//laser
     else if (flag_use_laser_or_vicon == 1)
@@ -278,7 +278,7 @@ void printf_info()
     if(flag_use_laser_or_vicon == 0)
     {
         cout <<">>>>>>>>>>>>>>>>>>>>>>>>Vision Info [ENU Frame]<<<<<<<<<<<<<<<<<<<<<<<<<" <<endl;
-        cout << "Pos_vision [X Y Z] : " << pos_drone_vio[1] << " [ m ] "<< -pos_drone_vio[0] <<" [ m ] "<< pos_drone_vio[2] <<" [ m ] "<<endl;
+        cout << "Pos_vision [X Y Z] : " << pos_drone_vio[0] << " [ m ] "<< pos_drone_vio[1] <<" [ m ] "<< pos_drone_vio[2] <<" [ m ] "<<endl;
         cout << "Att_vision [R P Y] : " << Euler_vio[0] * 180/M_PI <<" [deg] "<< Euler_vio[1] * 180/M_PI << " [deg] "<< Euler_vio[2] * 180/M_PI<<" [deg] "<<endl;
     }else
     {

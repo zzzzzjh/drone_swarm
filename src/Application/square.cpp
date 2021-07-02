@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh("~");
 
     // 频率 [1hz]
-    ros::Rate rate(1.0);
+    ros::Rate rate(20);
 
     // 【发布】发送给position_control.cpp的命令
     ros::Publisher move_pub = nh.advertise<drone_command::ControlCommand>("/drone_command/control_command", 10);
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>参数读取<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     nh.param<float>("size_square", size_square, 5);
     nh.param<float>("height_square", height_square, 5);
-    nh.param<float>("sleep_time", sleep_time, 10.0);
+    nh.param<float>("sleep_time", sleep_time, 200.0);
 
 
 
