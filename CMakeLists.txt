@@ -79,6 +79,8 @@ catkin_package(
 include_directories(
   include
   include/utils
+  include/swarm
+  include/single
   include/position_controller
   ${catkin_INCLUDE_DIRS}
 
