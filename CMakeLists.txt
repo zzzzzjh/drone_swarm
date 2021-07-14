@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(drone_command)
+project(drone_swarm)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   tf2_eigen
   tf2_ros
+  drone_msg
 )
 
 ## System dependencies are found with CMake's conventions
@@ -28,18 +29,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Generate messages in the 'msg' folder
- add_message_files(
+add_message_files(
   DIRECTORY msg
   FILES
-  ControlCommand.msg
-  TrajectoryPoint.msg
-  Trajectory.msg
-  AttitudeReference.msg
-  DroneState.msg
-  Topic_for_log.msg
-  ControlOutput.msg
-  PositionReference.msg
- )
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -59,6 +52,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 generate_messages(
   DEPENDENCIES
   geometry_msgs 
+  nav_msgs
   sensor_msgs
   std_msgs
 )
@@ -79,55 +73,44 @@ catkin_package(
 include_directories(
   include
   include/utils
-  include/position_controller
+  include/swarm
   ${catkin_INCLUDE_DIRS}
 
 )
 
-add_library(OptiTrackFeedbackRigidBody src/lib/OptiTrackFeedBackRigidBody.cpp)
-add_library(KeyboardEvent src/lib/KeyboardEvent.cpp)
+#add_library(OptiTrackFeedbackRigidBody src/lib/OptiTrackFeedBackRigidBody.cpp)
+#add_library(KeyboardEvent src/lib/KeyboardEvent.cpp)
 
 ###### Main File ##########
-##px4_pos_controller.cpp
-add_executable(px4_pos_controller src/single/px4_pos_controller.cpp)
-add_dependencies(px4_pos_controller drone_command_gencpp) 
-target_link_libraries(px4_pos_controller ${catkin_LIBRARIES})
-
-##px4_pos_estimator.cpp
-add_executable(px4_pos_estimator src/single/px4_pos_estimator.cpp)
-add_dependencies(px4_pos_estimator drone_command_gencpp)
-target_link_libraries(px4_pos_estimator ${catkin_LIBRARIES})
-target_link_libraries(px4_pos_estimator OptiTrackFeedbackRigidBody)
-
-##px4_sender.cpp
-add_executable(px4_sender src/single/px4_sender.cpp)
-add_dependencies(px4_sender drone_command_gencpp)
-target_link_libraries(px4_sender ${catkin_LIBRARIES})
-
-##gazebo_ground_truth.cpp
-add_executable(gazebo_ground_truth src/single/gazebo_ground_truth.cpp)
-add_dependencies(gazebo_ground_truth drone_command_gencpp)
-target_link_libraries(gazebo_ground_truth ${catkin_LIBRARIES})
-##
-##get_uwb.cpp
-add_executable(get_uwb src/single/get_uwb.cpp)
-add_dependencies(get_uwb drone_command_gencpp)
-target_link_libraries(get_uwb ${catkin_LIBRARIES})
-
-##move.cpp
-add_executable(move src/Application/move.cpp)
-add_dependencies(move drone_command_gencpp)
-target_link_libraries(move ${catkin_LIBRARIES})
-
-add_executable(square src/Application/square.cpp)
-add_dependencies(square drone_command_gencpp)
-target_link_libraries(square ${catkin_LIBRARIES})
-
-add_executable(set_mode src/single/set_mode.cpp)
-add_dependencies(set_mode drone_command_gencpp)
-target_link_libraries(set_mode ${catkin_LIBRARIES})
 
 
+
+###### Swarm ##########
+
+##swarm_controller.cpp
+add_executable(swarm_controller src/swarm/swarm_controller.cpp)
+add_dependencies(swarm_controller drone_swarm_gencpp)
+target_link_libraries(swarm_controller ${catkin_LIBRARIES})
+
+##swarm_estimator.cpp
+add_executable(swarm_estimator src/swarm/swarm_estimator.cpp)
+add_dependencies(swarm_estimator drone_swarm_gencpp)
+target_link_libraries(swarm_estimator ${catkin_LIBRARIES})
+
+##swarm_formation_control.cpp
+add_executable(swarm_formation_control src/swarm/swarm_formation_control.cpp)
+add_dependencies(swarm_formation_control drone_swarm_gencpp)
+target_link_libraries(swarm_formation_control ${catkin_LIBRARIES})
+
+##swarm_ground_station.cpp
+add_executable(swarm_ground_station src/swarm/swarm_ground_station.cpp)
+add_dependencies(swarm_ground_station drone_swarm_gencpp)
+target_link_libraries(swarm_ground_station ${catkin_LIBRARIES})
+
+##swarm_terminal_control.cpp
+add_executable(swarm_terminal_control src/swarm/swarm_terminal_control.cpp)
+add_dependencies(swarm_terminal_control drone_swarm_gencpp)
+target_link_libraries(swarm_terminal_control ${catkin_LIBRARIES})
 
 
 #############
@@ -174,7 +157,7 @@ install(DIRECTORY launch/
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_drone_command.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_drone_swarm.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
