@@ -121,6 +121,10 @@ target_link_libraries(swarm_gazebo_truth ${catkin_LIBRARIES})
 add_executable(swarm_ground_station_msg src/swarm/swarm_ground_station_msg.cpp)
 add_dependencies(swarm_ground_station_msg drone_swarm_gencpp)
 target_link_libraries(swarm_ground_station_msg ${catkin_LIBRARIES})
+##swarm_trajectory.cpp
+#add_executable(swarm_trajectory src/swarm/swarm_trajectory.cpp)
+#add_dependencies(swarm_trajectory drone_swarm_gencpp)
+#target_link_libraries(swarm_trajectory ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############
