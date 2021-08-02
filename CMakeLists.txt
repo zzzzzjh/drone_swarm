@@ -74,6 +74,11 @@ include_directories(
   include
   include/utils
   include/swarm
+<<<<<<< HEAD
+=======
+  include/single
+  include/position_controller
+>>>>>>> 7756ba2e33a1848426e4fbb36823146bbdf8c064
   ${catkin_INCLUDE_DIRS}
 
 )
