@@ -226,11 +226,15 @@ int main(int argc, char **argv)
             //　一阶积分器分布式编队控制算法，可追踪时变轨迹，此处采用双向环的拓扑结构，且仅部分无人机可收到地面站发来的虚拟领队消息
             //　参考文献：Multi-Vehicle consensus with a time-varying reference state 公式(11) - (12)
             //　目前该算法有一定控制偏差，可能是由于参数选取不是最佳导致的
-           time_circle= time_circle+0.01;
-           pos_rel_target[0]= Command_Now.position_ref[0] +7 * sin(time_circle) - pos_drone[0];
-           pos_rel_target[1]= Command_Now.position_ref[1] +7 * cos(time_circle)- pos_drone[1];
-        //    pos_rel_target[0]= Command_Now.position_ref[0] - pos_drone[0];
-        //    pos_rel_target[1]= Command_Now.position_ref[1] - pos_drone[1];
+           time_circle= time_circle+0.005;
+          // pos_rel_target[0]= Command_Now.position_ref[0] +5 * sin(time_circle) - pos_drone[0]+0.7*Command_Now.swarm_size * formation_separation(uav_id,0);
+           //pos_rel_target[1]= Command_Now.position_ref[1] +5 * cos(time_circle)- pos_drone[1]+ 0.7*Command_Now.swarm_size * formation_separation(uav_id,1);
+
+           pos_rel_target[0]= Command_Now.position_ref[0]  - pos_drone[0]+0.7*Command_Now.swarm_size * formation_separation(uav_id,0);
+           pos_rel_target[1]= Command_Now.position_ref[1]  - pos_drone[1]+ 0.7*Command_Now.swarm_size * formation_separation(uav_id,1);
+
+
+
            pos_rel_target[2]= Command_Now.position_ref[2]  - pos_drone[2];
            pos_rel[0] = pos_nei[0] - pos_drone;
            pos_rel[1] = pos_nei[1] - pos_drone;
@@ -246,17 +250,15 @@ int main(int argc, char **argv)
              yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
 
             //following the virtual leader by  potential field function
-            state_sp[0] = 0.2*vel_incre(pos_rel_target,1)[0] + 0.05*(vel_incre(pos_rel[0],0)[0] + vel_incre(pos_rel[1],0)[0]);
-            state_sp[1] = 0.2*vel_incre(pos_rel_target,1)[1] + 0.05*(vel_incre(pos_rel[0],0)[1] + vel_incre(pos_rel[1],0)[1]);
-            // a simple collision avoidance
-            // if (pos_rel[0].squaredNorm()<1){
-            //     state_sp[0] = state_sp[0] +0.5*pos_rel[0][0]/pos_rel[0].squaredNorm()/pos_rel[0].squaredNorm();
-            //     state_sp[1] = state_sp[1] +0.5*pos_rel[0][1]/pos_rel[0].squaredNorm()/pos_rel[0].squaredNorm();
-            // }
-            // if (pos_rel[1].squaredNorm()<1){
-            //     state_sp[0] = state_sp[0] +0.5*pos_rel[1][0]/pos_rel[1].squaredNorm()/pos_rel[1].squaredNorm();
-            //     state_sp[1] = state_sp[1] +0.5*pos_rel[1][1]/pos_rel[1].squaredNorm()/pos_rel[1].squaredNorm();
-            // }
+            state_sp[0] = 0.5*vel_incre(pos_rel_target,1)[0] + 0.5*(vel_incre(pos_rel[0],0)[0] + vel_incre(pos_rel[1],0)[0]);
+            state_sp[1] = 0.5*vel_incre(pos_rel_target,1)[1] + 0.5*(vel_incre(pos_rel[0],0)[1] + vel_incre(pos_rel[1],0)[1]);
+            
+            if( abs(state_sp[0])>0.8){
+                state_sp[0]=state_sp[0]/abs(state_sp[0])*0.8;
+            }
+            if( abs(state_sp[1])>0.8){
+                state_sp[1]=state_sp[1]/abs(state_sp[1])*0.8;
+            }
             yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
             send_vel_xy_pos_z_setpoint(state_sp, yaw_sp);
             cout << "2pos:" << state_sp[0] << " " << state_sp[1] << " " << time_circle<< endl;

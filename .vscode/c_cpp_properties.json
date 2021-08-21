@@ -1,0 +1,37 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/humaninloop/Prometheus/Prometheus/devel/include/**",
+        "/home/humaninloop/catkin_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/FastPlanner/bspline_opt/include/**",
+        "/home/humaninloop/catkin_ws/src/drone_command/include/**",
+        "/home/humaninloop/catkin_ws/src/drone_msg/include/**",
+        "/home/humaninloop/catkin_ws/src/drone_swarm/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/FastPlanner/path_searching/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/FastPlanner/plan_env/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/control/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Simulator/gazebo_simulator/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/global_planning/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/hybrid_astar/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/local_planner/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/mission/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/FastPlanner/plan_manage/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/Utils/pose_utils/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/slam/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/ground_station/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/swarm_planning/include/**",
+        "/home/humaninloop/Prometheus/Prometheus/Modules/planning/FastPlanner/traj_utils/include/**",
+        "/home/humaninloop/catkin_ws/src/vrpn_client_ros/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}
