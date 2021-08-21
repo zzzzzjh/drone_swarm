@@ -250,8 +250,8 @@ int main(int argc, char **argv)
              yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
 
             //following the virtual leader by  potential field function
-            state_sp[0] = 0.5*vel_incre(pos_rel_target,1)[0] + 0.5*(vel_incre(pos_rel[0],0)[0] + vel_incre(pos_rel[1],0)[0]);
-            state_sp[1] = 0.5*vel_incre(pos_rel_target,1)[1] + 0.5*(vel_incre(pos_rel[0],0)[1] + vel_incre(pos_rel[1],0)[1]);
+            state_sp[0] = 0.5*vel_incre(pos_rel_target,1)[0] + 0.8*(vel_incre(pos_rel[0],0)[0] + vel_incre(pos_rel[1],0)[0]);
+            state_sp[1] = 0.5*vel_incre(pos_rel_target,1)[1] + 0.8*(vel_incre(pos_rel[0],0)[1] + vel_incre(pos_rel[1],0)[1]);
             
             if( abs(state_sp[0])>0.8){
                 state_sp[0]=state_sp[0]/abs(state_sp[0])*0.8;
