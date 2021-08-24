@@ -357,8 +357,8 @@ Eigen::Vector2d vel_incre(const Eigen::Vector3d& pos_rel, int if_target)//pos_re
         }
        
     }else{
-             Velocity_increment[0] = -pos_rel[0]/(distance)*(tanh(-distance+1)+1);
-            Velocity_increment[1] = -pos_rel[1]/(distance)*(tanh(-distance+1)+1);           
+             Velocity_increment[0] = -pos_rel[0]/(distance)*(tanh(-distance+2)+1);
+            Velocity_increment[1] = -pos_rel[1]/(distance)*(tanh(-distance+2)+1);           
         
     }
     return Velocity_increment;
