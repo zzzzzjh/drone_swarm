@@ -179,7 +179,7 @@ int main(int argc, char **argv)
             }else
             {
                 //此处切换会manual模式是因为:PX4默认在offboard模式且有控制的情况下没法上锁,直接使用飞控中的land模式
-                mode_cmd.request.custom_mode = "MANUAL";
+                mode_cmd.request.custom_mode = "AUTO.LAND";
                 set_mode_client.call(mode_cmd);
 
                 arm_cmd.request.value = false;
@@ -210,14 +210,24 @@ int main(int argc, char **argv)
 
             //　此控制方式即为　集中式控制，　直接由地面站指定期望位置点
             //  虚拟领机位置 + 队形偏移量
+            // calculate relative distance
+            pos_rel[0] = pos_nei[0] - pos_drone;
+           pos_rel[1] = pos_nei[1] - pos_drone;
+
             time_circle= time_circle+0.03;
-            state_sp[0] = Command_Now.position_ref[0] + Command_Now.swarm_size * formation_separation(uav_id,0) - gazebo_offset[0]+7 * sin(time_circle);
-            state_sp[1] = Command_Now.position_ref[1] + Command_Now.swarm_size * formation_separation(uav_id,1) - gazebo_offset[1]+7 * cos(time_circle);
-            state_sp[2] = Command_Now.position_ref[2] + Command_Now.swarm_size * formation_separation(uav_id,2) - gazebo_offset[2];
+            // state_sp[0] = Command_Now.position_ref[0] + Command_Now.swarm_size * formation_separation(uav_id,0) - gazebo_offset[0]+7 * sin(time_circle);
+            // state_sp[1] = Command_Now.position_ref[1] + Command_Now.swarm_size * formation_separation(uav_id,1) - gazebo_offset[1]+7 * cos(time_circle);
+            // state_sp[2] = Command_Now.position_ref[2] + Command_Now.swarm_size * formation_separation(uav_id,2) - gazebo_offset[2];
+            state_sp[0] = pos_drone[0] +  0.09*(elasticity(pos_rel[0],0,Command_Now.position_ref[0]) + elasticity(pos_rel[1],0,Command_Now.position_ref[0]));
+            state_sp[1] = pos_drone[1] +  0.09*(elasticity(pos_rel[0],1,Command_Now.position_ref[1]) + elasticity(pos_rel[1],1,Command_Now.position_ref[1]));
+            // state_sp[2] = pos_drone[2] +  0.8*(vel_incre(pos_rel[0],0)[2] + vel_incre(pos_rel[1],0)[2]);
+            // state_sp[0] = pos_drone[0] ;
+            // state_sp[1] = pos_drone[1];
+            state_sp[2] = pos_drone[2] +  0.09*(elasticity(pos_rel[0],2,Command_Now.position_ref[2]) + elasticity(pos_rel[1],2,Command_Now.position_ref[2])) ;
             yaw_sp = Command_Now.yaw_ref;
             send_pos_setpoint(state_sp, yaw_sp);
             // cout << "curPos" << Command_Now.position_ref[0] << " " << Command_Now.position_ref[1] << " " << Command_Now.position_ref[2] << endl;
-             cout << "2pos:" << state_sp[0] << " " << state_sp[1] << " " << time_circle<< endl;
+             cout << "2pos:" << state_sp[0] << " " << state_sp[1] << " " <<state_sp[2] << endl;
             break;
 
         case drone_msg::SwarmCommand::Velocity_Control:

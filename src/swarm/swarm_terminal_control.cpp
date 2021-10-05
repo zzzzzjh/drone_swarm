@@ -5,8 +5,8 @@
 #include <boost/format.hpp>
 
 //topic 头文件
-#include <drone_command/SwarmCommand.h>
-#include <drone_command/DroneState.h>
+#include <drone_msg/SwarmCommand.h>
+#include <drone_msg/DroneState.h>
 #include <geometry_msgs/PoseStamped.h>
 
 using namespace std;
@@ -15,7 +15,7 @@ using namespace std;
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>全 局 变 量<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 string uav_name;
 int uav_id;
-drone_command::SwarmCommand swarm_command;
+drone_msg::SwarmCommand swarm_command;
 ros::Publisher command_pub;
 float state_desired[4];
 bool sim_mode;
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     nh.param<string>("uav_name", uav_name, "/uav");
     nh.param<bool>("sim_mode", sim_mode, true);
 
-    command_pub = nh.advertise<drone_command::SwarmCommand>(uav_name + "/drone_command/swarm_command", 10);
+    command_pub = nh.advertise<drone_msg::SwarmCommand>(uav_name + "/drone_msg/swarm_command", 10);
 
     //固定的浮点显示
     cout.setf(ios::fixed);
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
             cout << "Please enter 1 to disarm the UAV and switch to OFFBOARD mode."<<endl;
             cin >> start_flag;
 
-            swarm_command.Mode = drone_command::SwarmCommand::Idle;
+            swarm_command.Mode = drone_msg::SwarmCommand::Idle;
             swarm_command.yaw_ref = 999;
             //【发布】阵型
             command_pub.publish(swarm_command);
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
         cout << "Please enter 1 to takeoff the UAV."<<endl;
         cin >> start_flag;
 
-        swarm_command.Mode = drone_command::SwarmCommand::Takeoff;
+        swarm_command.Mode = drone_msg::SwarmCommand::Takeoff;
         swarm_command.yaw_ref = 0.0;
         //【发布】阵型
         command_pub.publish(swarm_command);
@@ -91,8 +91,8 @@ int main(int argc, char **argv)
             cout << "desired state: --- yaw [deg]:"<<endl;
             cin >> state_desired[3];
             state_desired[3] = state_desired[3]/180.0*M_PI;
-            swarm_command.Mode = drone_command::SwarmCommand::Move;
-            swarm_command.Move_mode = drone_command::SwarmCommand::XYZ_POS;
+            swarm_command.Mode = drone_msg::SwarmCommand::Move;
+            swarm_command.Move_mode = drone_msg::SwarmCommand::XYZ_POS;
             swarm_command.position_ref[0] = state_desired[0];
             swarm_command.position_ref[1] = state_desired[1];
             swarm_command.position_ref[2] = state_desired[2];
@@ -115,8 +115,8 @@ int main(int argc, char **argv)
             cout << "desired state: --- yaw [deg]:"<<endl;
             cin >> state_desired[3];
             state_desired[3] = state_desired[3]/180.0*M_PI;
-            swarm_command.Mode = drone_command::SwarmCommand::Move;
-            swarm_command.Move_mode = drone_command::SwarmCommand::XY_VEL_Z_POS;
+            swarm_command.Mode = drone_msg::SwarmCommand::Move;
+            swarm_command.Move_mode = drone_msg::SwarmCommand::XY_VEL_Z_POS;
             swarm_command.velocity_ref[0] = state_desired[0];
             swarm_command.velocity_ref[1] = state_desired[1];
             swarm_command.position_ref[2] = state_desired[2];
@@ -130,19 +130,19 @@ int main(int argc, char **argv)
         } 
         else if (start_flag == 3)
         {
-            swarm_command.Mode = drone_command::SwarmCommand::Hold;
+            swarm_command.Mode = drone_msg::SwarmCommand::Hold;
             //【发布】阵型
             command_pub.publish(swarm_command);
         }
         else if (start_flag == 4)
         {
-            swarm_command.Mode = drone_command::SwarmCommand::Land;
+            swarm_command.Mode = drone_msg::SwarmCommand::Land;
             //【发布】阵型
             command_pub.publish(swarm_command);
         }
         else if (start_flag == 5)
         {
-            swarm_command.Mode = drone_command::SwarmCommand::Disarm;
+            swarm_command.Mode = drone_msg::SwarmCommand::Disarm;
             //【发布】阵型
             command_pub.publish(swarm_command);
         }

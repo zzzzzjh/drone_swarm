@@ -21,7 +21,7 @@
     <!-- swarm_estimator 参数 -->
     <arg name="input_source" default="2"/>
     <!-- swarm_controller 参数 -->
-    <arg name="Takeoff_height" default="1.0"/>
+    <arg name="Takeoff_height" default="5.0"/>
     <arg name="Disarm_height" default="0.2"/>
     <arg name="Land_speed" default="0.2"/>
     <!-- 飞机模型和世界模型 -->
@@ -210,7 +210,7 @@
 		<param name="formation_size" value="1.0"/>
 		<param name="sim_mode" value="true"/>
 		<!-- // 0代表位置追踪模式，１代表速度追踪模式，２代表加速度追踪模式  -->
-		<param name="controller_num" value="1"/>
+		<param name="controller_num" value="0"/>
 		<param name="uav0_name" value="$(arg uav0_name)" />
 		<param name="uav1_name" value="$(arg uav1_name)" />
 		<param name="uav2_name" value="$(arg uav2_name)" />

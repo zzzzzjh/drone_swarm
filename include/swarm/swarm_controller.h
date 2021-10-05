@@ -343,6 +343,13 @@ void rotation_yaw(float yaw_angle, float body_frame[2], float enu_frame[2])
     enu_frame[1] = body_frame[0] * sin(yaw_angle) + body_frame[1] * cos(yaw_angle);
 }
 
+double elasticity(const Eigen::Vector3d& pos_rel, int direction, double range)//pos_rel  = pos_other - pos_self , direction:0x,1y,2z 
+{
+    double distance = abs(pos_rel[direction]);
+    double force =  pos_rel[direction] / distance * tanh(distance-range);
+    return force;
+}
+
 Eigen::Vector2d vel_incre(const Eigen::Vector3d& pos_rel, int if_target)//pos_rel  = pos_other - pos_self
 {
     double distance = pos_rel.norm();
