@@ -1,0 +1,435 @@
+ <launch>
+    <!-- 环境变量的设置 -->    
+    <env name="PX4_ESTIMATOR" value="ekf2_vision" />
+    <!-- 无人机集群数量 -->
+    <arg name="swarm_num" default="8"/>
+    <!-- 无人机名称 -->
+    <arg name="uav0_name" default="/uav0"/>
+    <arg name="uav1_name" default="/uav1"/>
+    <arg name="uav2_name" default="/uav2"/>
+    <arg name="uav3_name" default="/uav3"/>
+    <arg name="uav4_name" default="/uav4"/>
+    <arg name="uav5_name" default="/uav5"/>
+    <arg name="uav6_name" default="/uav6"/>
+    <arg name="uav7_name" default="/uav7"/>
+    <!-- 无人机ID -->
+    <arg name="uav0_id" default="0"/>
+    <arg name="uav1_id" default="1"/>
+    <arg name="uav2_id" default="2"/>
+    <arg name="uav3_id" default="3"/>
+    <arg name="uav4_id" default="4"/>
+    <arg name="uav5_id" default="5"/>
+    <arg name="uav6_id" default="6"/>
+    <arg name="uav7_id" default="7"/>
+    <!-- 无人机初始位置 -->
+    <arg name="uav0_init_x" default="2.0"/>
+    <arg name="uav0_init_y" default="2.0"/>
+    <arg name="uav1_init_x" default="2.0"/>
+    <arg name="uav1_init_y" default="0.0"/>
+    <arg name="uav2_init_x" default="2.0"/>
+    <arg name="uav2_init_y" default="-2.0"/>
+    <arg name="uav3_init_x" default="0.0"/>
+    <arg name="uav3_init_y" default="-2.0"/>
+    <arg name="uav4_init_x" default="-2.0"/>
+    <arg name="uav4_init_y" default="-2.0"/>
+    <arg name="uav5_init_x" default="-2.0"/>
+    <arg name="uav5_init_y" default="0.0"/>
+    <arg name="uav6_init_x" default="-2.0"/>
+    <arg name="uav6_init_y" default="2.0"/>
+    <arg name="uav7_init_x" default="0.0"/>
+    <arg name="uav7_init_y" default="2.0"/>
+    <!-- swarm_estimator 参数 -->
+    <arg name="input_source" default="2"/>
+    <!-- swarm_controller 参数 -->
+    <arg name="Takeoff_height" default="1.0"/>
+    <arg name="Disarm_height" default="0.2"/>
+    <arg name="Land_speed" default="0.2"/>
+    <!-- 飞机模型和世界模型 -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+    <arg name="world" default="$(find drone_swarm)/world/empty.world"/>
+    <!-- gazebo configs -->
+    <arg name="gui" default="true"/>
+    <arg name="debug" default="false"/>
+    <arg name="verbose" default="false"/>
+    <arg name="paused" default="false"/>
+    
+    <!-- Gazebo sim -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="world_name" value="$(arg world)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="verbose" value="$(arg verbose)"/>
+        <arg name="paused" value="$(arg paused)"/>
+    </include>
+    <!-- UAV0 -->
+    <group ns="uav0">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="0"/>
+        <arg name="fcu_url" default="udp://:14540@localhost:14580"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav0_init_x)"/>
+            <arg name="y" value="$(arg uav0_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14560"/>
+            <arg name="mavlink_tcp_port" value="4560"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+    <!-- UAV1 -->
+    <group ns="uav1">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="1"/>
+        <arg name="fcu_url" default="udp://:14541@localhost:14581"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav1_init_x)"/>
+            <arg name="y" value="$(arg uav1_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14561"/>
+            <arg name="mavlink_tcp_port" value="4561"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+    <!-- UAV2 -->
+    <group ns="uav2">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="2"/>
+        <arg name="fcu_url" default="udp://:14542@localhost:14582"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav2_init_x)"/>
+            <arg name="y" value="$(arg uav2_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14562"/>
+            <arg name="mavlink_tcp_port" value="4562"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+
+    <!-- UAV3 -->
+    <group ns="uav3">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="3"/>
+        <arg name="fcu_url" default="udp://:14543@localhost:14583"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav3_init_x)"/>
+            <arg name="y" value="$(arg uav3_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14563"/>
+            <arg name="mavlink_tcp_port" value="4563"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+
+    <!-- UAV4 -->
+    <group ns="uav4">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="4"/>
+        <arg name="fcu_url" default="udp://:14544@localhost:14584"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav4_init_x)"/>
+            <arg name="y" value="$(arg uav4_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14564"/>
+            <arg name="mavlink_tcp_port" value="4564"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+
+    <!-- UAV5 -->
+    <group ns="uav5">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="5"/>
+        <arg name="fcu_url" default="udp://:14545@localhost:14585"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav0_init_x)"/>
+            <arg name="y" value="$(arg uav0_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14565"/>
+            <arg name="mavlink_tcp_port" value="4565"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+
+    <!-- UAV6 -->
+    <group ns="uav6">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="6"/>
+        <arg name="fcu_url" default="udp://:14546@localhost:14586"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav6_init_x)"/>
+            <arg name="y" value="$(arg uav6_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14566"/>
+            <arg name="mavlink_tcp_port" value="4566"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+
+    <!-- UAV7 -->
+    <group ns="uav7">
+        <!-- MAVROS and vehicle configs -->
+        <arg name="ID" value="7"/>
+        <arg name="fcu_url" default="udp://:14547@localhost:14587"/>
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find px4)/launch/single_vehicle_spawn.launch">
+            <arg name="x" value="$(arg uav7_init_x)"/>
+            <arg name="y" value="$(arg uav7_init_y)"/>
+            <arg name="z" value="0"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="14567"/>
+            <arg name="mavlink_tcp_port" value="4567"/>
+            <arg name="ID" value="$(arg ID)"/>
+        </include>
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value=""/>
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+            <arg name="tgt_component" value="1"/>
+        </include>
+    </group>
+    <!-- 获取gazebo的真值 -->
+    <node pkg="drone_swarm" type="swarm_gazebo_truth" name="swarm_gazebo_truth" output="screen">
+	</node>
+
+
+    <!-- 启动估计 -->
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav0" output="screen">
+		<param name="uav_name" value="$(arg uav0_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav1" output="screen">
+		<param name="uav_name" value="$(arg uav1_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav2" output="screen">
+		<param name="uav_name" value="$(arg uav2_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav3" output="screen">
+		<param name="uav_name" value="$(arg uav3_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav4" output="screen">
+		<param name="uav_name" value="$(arg uav4_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav5" output="screen">
+		<param name="uav_name" value="$(arg uav5_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav6" output="screen">
+		<param name="uav_name" value="$(arg uav6_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+    <node pkg="drone_swarm" type="swarm_estimator" name="swarm_estimator_uav7" output="screen">
+		<param name="uav_name" value="$(arg uav7_name)"/>
+		<param name="input_source" value="$(arg input_source)" />
+	</node>
+
+
+
+    <!-- 启动控制节点 -->
+    <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav0" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav0_id)"/>
+		<param name="uav_name" value="$(arg uav0_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+    <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav1" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav1_id)"/>
+		<param name="uav_name" value="$(arg uav1_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav2" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav2_id)"/>
+		<param name="uav_name" value="$(arg uav2_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav3" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav3_id)"/>
+		<param name="uav_name" value="$(arg uav3_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav4" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav4_id)"/>
+		<param name="uav_name" value="$(arg uav4_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav5" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav5_id)"/>
+		<param name="uav_name" value="$(arg uav5_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav6" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav6_id)"/>
+		<param name="uav_name" value="$(arg uav6_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <node pkg="drone_swarm" type="swarm_controller" name="swarm_controller_uav7" output="screen">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="uav_id" value="$(arg uav7_id)"/>
+		<param name="uav_name" value="$(arg uav7_name)"/>
+		<param name="Takeoff_height" value="$(arg Takeoff_height)"/>
+		<param name="Disarm_height" value="$(arg Disarm_height)"/>
+		<param name="Land_speed" value="$(arg Land_speed)"/>
+     </node>
+
+     <!-- 启动地面站 -->
+     <node pkg="drone_swarm" type="swarm_ground_station" name="swarm_ground_station" output="screen" launch-prefix="gnome-terminal --tab --">	
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="flag_ros2groundstation" value="false"/>
+		<param name="uav0_name" value="$(arg uav0_name)" />
+		<param name="uav1_name" value="$(arg uav1_name)" />
+		<param name="uav2_name" value="$(arg uav2_name)" />
+		<param name="uav0_id" value="$(arg uav0_id)" />
+		<param name="uav1_id" value="$(arg uav1_id)" />
+		<param name="uav2_id" value="$(arg uav2_id)" />
+	</node>
+
+	<node pkg="drone_swarm" type="swarm_ground_station_msg" name="swarm_ground_station_msg" output="screen" launch-prefix="gnome-terminal --tab --">	
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="flag_ros2groundstation" value="false"/>
+		<param name="uav0_name" value="$(arg uav0_name)" />
+		<param name="uav1_name" value="$(arg uav1_name)" />
+		<param name="uav2_name" value="$(arg uav2_name)" />
+		<param name="uav0_id" value="$(arg uav0_id)" />
+		<param name="uav1_id" value="$(arg uav1_id)" />
+		<param name="uav2_id" value="$(arg uav2_id)" />
+	</node>
+      <!-- 阵型控制程序 -->
+	<node pkg="drone_swarm" type="swarm_formation_control" name="swarm_formation_control" output="screen" launch-prefix="gnome-terminal --">
+		<param name="swarm_num" value="$(arg swarm_num)"/>
+		<param name="formation_size" value="1.0"/>
+		<param name="sim_mode" value="true"/>
+		<!-- // 0代表位置追踪模式，１代表速度追踪模式，２代表加速度追踪模式  -->
+		<param name="controller_num" value="1"/>
+		<param name="uav0_name" value="$(arg uav0_name)" />
+		<param name="uav1_name" value="$(arg uav1_name)" />
+		<param name="uav2_name" value="$(arg uav2_name)" />
+		<param name="uav0_id" value="$(arg uav0_id)" />
+		<param name="uav1_id" value="$(arg uav1_id)" />
+		<param name="uav2_id" value="$(arg uav2_id)" />
+	</node>
+</launch>
