@@ -8,33 +8,33 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/PositionTarget.h>
 
-#include <drone_msg/DroneState.h>
+#include <geometry_msgs/PointStamped.h>
 
-#include "formation_utils.h"
+#include <drone_msg/DroneState.h>
+#include <drone_msg/Topology.h>
+
+#include "Topology.h"
 #include "message_utils.h"
 #include "math_utils.h"
-
+#include <boost/format.hpp>
 // 宏定义
 #define NODE_NAME "swarm_controller"            // 节点名字
 #define NUM_POINT 2                             // 打印小数点
-
+#define NUM_UAV 8
 // 变量
 double time_circle = 0;
 int swarm_num;                                  // 集群数量
 string uav_name;                                // 无人机名字
 int uav_id;                                     // 无人机编号
-int num_neighbour = 2;                          // 邻居数量,目前默认为2
-int neighbour_id1,neighbour_id2;                // 邻居ID
-string neighbour_name1,neighbour_name2;         // 邻居名字
 string msg_name;
+Topology topo;
 Eigen::Vector2f geo_fence_x,geo_fence_y,geo_fence_z; //Geigraphical fence 地理围栏
 drone_msg::SwarmCommand Command_Now;      // 无人机当前执行命令
 drone_msg::SwarmCommand Command_Last;     // 无人机上一条执行命令
-drone_msg::DroneState _DroneState;        // 无人机状态
-Eigen::Vector3d pos_drone;                      // 无人机位置
-Eigen::Vector3d vel_drone;                      // 无人机速度
-Eigen::Vector3d pos_nei[2];                     // 邻居位置
-Eigen::Vector3d pos_rel[2];                      //relative position of neighbor = pos_drone -pos_nei[i]
+drone_msg::DroneState _DroneState[NUM_UAV];        // 无人机状态
+Eigen::Vector3d pos_drone[NUM_UAV];                      // 无人机位置
+Eigen::Vector3d vel_drone[NUM_UAV];                      // 无人机速度
+Eigen::Vector3d pos_rel[NUM_UAV];                      //relative position of neighbor = pos_drone -pos_nei[i]
 Eigen::Vector3d pos_rel_target;
 Eigen::Vector3d vel_nei[2];                     // 邻居速度
 float Takeoff_height;                           // 默认起飞高度
@@ -54,16 +54,17 @@ float yaw_sp;                                   // 辅助变量
 Eigen::Vector3d accel_sp;                       // 辅助变量
 Eigen::Vector3d throttle_sp;                    // 辅助变量
 drone_msg::Message message;               // 待打印消息
-
+Eigen::Vector3d state_sp_plus;
+geometry_msgs::PointStamped p;
+int topo_count ;
 // 订阅
 ros::Subscriber command_sub;
-ros::Subscriber drone_state_sub;
+ros::Subscriber drone_state_sub[8];
 ros::Subscriber position_target_sub;
-ros::Subscriber nei1_state_sub;
-ros::Subscriber nei2_state_sub;
-
+ros::Subscriber topo_sub;
 // 发布
 ros::Publisher setpoint_raw_local_pub;
+ros::Publisher setpoint_raw_local;
 ros::Publisher message_pub;
 
 // 服务
@@ -99,50 +100,74 @@ void swarm_command_cb(const drone_msg::SwarmCommand::ConstPtr& msg)
     {
         Command_Now = Command_Last;
     }
-
-    if(Command_Now.Mode == drone_msg::SwarmCommand::Position_Control ||
-        Command_Now.Mode == drone_msg::SwarmCommand::Velocity_Control ||
-        Command_Now.Mode == drone_msg::SwarmCommand::Accel_Control )
-    {
-        if (swarm_num == 1)
-        {
-            // swarm_num 为1时,即无人机无法变换阵型,并只能接收位置控制指令
-            Command_Now.Mode = drone_msg::SwarmCommand::Position_Control;
-            formation_separation << 0,0,0,0;
-        }else if(swarm_num == 3)
-        {
-            formation_separation = formation_utils::get_formation_separation(Command_Now.swarm_shape, Command_Now.swarm_size, swarm_num);
-        }else
-        {
-            // 未指定阵型,如若想6机按照8机编队飞行,则设置swarm_num为8即可
-            Command_Now.Mode = drone_msg::SwarmCommand::Position_Control;
-            formation_separation = Eigen::MatrixXf::Zero(swarm_num,4); 
-            pub_message(message_pub, drone_msg::Message::ERROR, msg_name, "Wrong swarm_num");
-        }
-    }
 }
 
-void drone_state_cb(const drone_msg::DroneState::ConstPtr& msg)
-{
-    _DroneState = *msg;
-
-    pos_drone  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
-    vel_drone  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+void topology_cb(const drone_msg::Topology::ConstPtr& msg){
+    topo.copy_topo_int(msg->topology);
 }
+// void drone_state_cb(const drone_msg::DroneState::ConstPtr& msg)
+// {
+//     _DroneState = *msg;
 
-void nei_state_cb(const drone_msg::DroneState::ConstPtr& msg, int nei_id)
-{
-    pos_nei[nei_id]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
-    vel_nei[nei_id]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+//     pos_drone  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+//     vel_drone  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+// }
+
+// void nei_state_cb(const drone_msg::DroneState::ConstPtr& msg, int nei_id)
+// {
+//     pos_nei[nei_id]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+//     vel_nei[nei_id]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+// }
+
+void drone_state_cb0(const drone_msg::DroneState::ConstPtr& msg) {
+    _DroneState[0] = *msg;
+    pos_drone[0]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[0]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
 }
-
+void drone_state_cb1(const drone_msg::DroneState::ConstPtr& msg) { 
+    _DroneState[1] = *msg;
+    pos_drone[1]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[1]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+}
+void drone_state_cb2(const drone_msg::DroneState::ConstPtr& msg) { 
+    _DroneState[2] = *msg;
+    pos_drone[2]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[2]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+ }
+void drone_state_cb3(const drone_msg::DroneState::ConstPtr& msg) { 
+    _DroneState[3] = *msg; 
+    pos_drone[3]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[3]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+}
+void drone_state_cb4(const drone_msg::DroneState::ConstPtr& msg) {
+     _DroneState[4] = *msg; 
+     pos_drone[4]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[4]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+}
+void drone_state_cb5(const drone_msg::DroneState::ConstPtr& msg) {
+     _DroneState[5] = *msg; 
+     pos_drone[5]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[5]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+}
+void drone_state_cb6(const drone_msg::DroneState::ConstPtr& msg) {
+     _DroneState[6] = *msg; 
+     pos_drone[6]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+     vel_drone[6]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+}
+void drone_state_cb7(const drone_msg::DroneState::ConstPtr& msg) { 
+    _DroneState[7] = *msg; 
+    pos_drone[7]  = Eigen::Vector3d(msg->position[0], msg->position[1], msg->position[2]);
+    vel_drone[7]  = Eigen::Vector3d(msg->velocity[0], msg->velocity[1], msg->velocity[2]);
+}
+void (*drone_state_cb[NUM_UAV+1])(const drone_msg::DroneState::ConstPtr&)={
+    drone_state_cb0,drone_state_cb1,drone_state_cb2,drone_state_cb3,drone_state_cb4,
+    drone_state_cb5, drone_state_cb6,drone_state_cb7,
+};
 void printf_param()
 {
     cout <<">>>>>>>>>>>>>>>>>>>>>>>> swarm controller Parameter <<<<<<<<<<<<<<<<<<<<<<" <<endl;
 
     cout << "uav_name   : "<< uav_name <<endl;
-    cout << "neighbour_name1   : "<< neighbour_name1 <<endl;
-    cout << "neighbour_name2   : "<< neighbour_name2 <<endl;
     cout << "k_p    : "<< k_p <<"  "<<endl;
     cout << "k_aij       : "<< k_aij <<"  "<<endl;
     cout << "k_gamma       : "<< k_gamma <<"  "<<endl;
@@ -169,21 +194,15 @@ void printf_state()
     cout.setf(ios::showpos);
 
     cout << "UAV_id : " <<  uav_id << "   UAV_name : " <<  uav_name << endl;
-    cout << "neighbour_id1 : " <<  neighbour_id1 << "   neighbour_name1 : " <<  neighbour_name1 << endl;
-    cout << "neighbour_id2 : " <<  neighbour_id2 << "   neighbour_name2 : " <<  neighbour_name2 << endl;
     cout << "UAV_pos [X Y Z] : " << pos_drone[0] << " [ m ] "<< pos_drone[1]<<" [ m ] "<<pos_drone[2]<<" [ m ] "<<endl;
     cout << "UAV_vel [X Y Z] : " << vel_drone[0] << " [ m/s ] "<< vel_drone[1]<<" [ m/s ] "<<vel_drone[2]<<" [ m/s ] "<<endl;
-    cout << "neighbour_pos [X Y Z] : " << pos_nei[0][0] << " [ m ] "<< pos_nei[0][1]<<" [ m ] "<<pos_nei[0][2]<<" [ m ] "<<endl;
-    cout << "neighbour_vel [X Y Z] : " << vel_nei[0][0] << " [ m/s ] "<< vel_nei[0][1]<<" [ m/s ] "<<vel_nei[0][2]<<" [ m/s ] "<<endl;
-    cout << "neighbour_pos [X Y Z] : " << pos_nei[1][0] << " [ m ] "<< pos_nei[1][1]<<" [ m ] "<<pos_nei[1][2]<<" [ m ] "<<endl;
-    cout << "neighbour_vel [X Y Z] : " << vel_nei[1][0] << " [ m/s ] "<< vel_nei[1][1]<<" [ m/s ] "<<vel_nei[1][2]<<" [ m/s ] "<<endl;
 }
 
 int check_failsafe()
 {
-    if (_DroneState.position[0] < geo_fence_x[0] || _DroneState.position[0] > geo_fence_x[1] ||
-        _DroneState.position[1] < geo_fence_y[0] || _DroneState.position[1] > geo_fence_y[1] ||
-        _DroneState.position[2] < geo_fence_z[0] || _DroneState.position[2] > geo_fence_z[1])
+    if (_DroneState[uav_id].position[0] < geo_fence_x[0] || _DroneState[uav_id].position[0] > geo_fence_x[1] ||
+        _DroneState[uav_id].position[1] < geo_fence_y[0] || _DroneState[uav_id].position[1] > geo_fence_y[1] ||
+        _DroneState[uav_id].position[2] < geo_fence_z[0] || _DroneState[uav_id].position[2] > geo_fence_z[1])
     {
         pub_message(message_pub, drone_msg::Message::ERROR, msg_name, "Out of the geo fence, the drone is landing...");
         return 1;
@@ -343,10 +362,22 @@ void rotation_yaw(float yaw_angle, float body_frame[2], float enu_frame[2])
     enu_frame[1] = body_frame[0] * sin(yaw_angle) + body_frame[1] * cos(yaw_angle);
 }
 
-double elasticity(const Eigen::Vector3d& pos_rel, int direction, double range)//pos_rel  = pos_other - pos_self , direction:0x,1y,2z 
+Eigen::Vector3d elasticity(const Eigen::Vector3d& pos_rel, float range, const boost::array<float, 3U>& direction )//pos_rel  = pos_other - pos_self , direction:0x,1y,2z 
 {
-    double distance = abs(pos_rel[direction]);
-    double force =  pos_rel[direction] / distance * tanh(distance-range);
+    // double distance1 = pos_rel.squaredNorm();
+    double distance0 = abs(pos_rel[0]);
+    double distance1 = abs(pos_rel[1]);
+    double distance2 = abs(pos_rel[2]);
+    Eigen::Vector3d dir;
+    dir[0] = direction[0];
+    dir[1] = direction[1];
+    dir[2] = direction[2];
+    dir.normalize();
+    Eigen::Vector3d force ;
+    cout << dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]<<endl;
+    force [0]  = pos_rel [0]/ distance0 * tanh(distance0-range*dir[0]);
+    force [1]  = pos_rel [1]/ distance1 * tanh(distance1-range*dir[1]);
+    force [2]  = pos_rel [2]/ distance2 * tanh(distance2-range*dir[2]);
     return force;
 }
 

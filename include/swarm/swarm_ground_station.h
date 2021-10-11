@@ -17,7 +17,7 @@
 
 #include "message_utils.h"
 // #include "math_utils.h"
-#include "formation_utils.h"
+
 
 using namespace std;
 #define NUM_POINT 2
@@ -156,28 +156,11 @@ void printf_swarm_state(int swarm_num, int uav_id, string uav_name, const drone_
             break;
 
         case drone_msg::SwarmCommand::Position_Control:
-            if(SwarmCommand.swarm_shape == drone_msg::SwarmCommand::One_column)
-            {
-                cout << "Command: [ Position_Control ] [One_column] size: " << SwarmCommand.swarm_size <<endl;
-            }else if(SwarmCommand.swarm_shape == drone_msg::SwarmCommand::Triangle)
-            {
-                cout << "Command: [ Position_Control ] [Triangle] size: " << SwarmCommand.swarm_size <<endl;
-            }else if(SwarmCommand.swarm_shape == drone_msg::SwarmCommand::Square)
-            {
-                cout << "Command: [ Position_Control ] [Square] size: " << SwarmCommand.swarm_size <<endl;
-            }else if(SwarmCommand.swarm_shape == drone_msg::SwarmCommand::Circular)
-            {
-                cout << "Command: [ Position_Control ] [Circular] size: " << SwarmCommand.swarm_size <<endl;
-            }
+           
             
-            formation = formation_utils::get_formation_separation(SwarmCommand.swarm_shape, SwarmCommand.swarm_size, swarm_num);
+            // formation = formation_utils::get_formation_separation(SwarmCommand.swarm_shape, SwarmCommand.swarm_size, swarm_num);
 
-            x = SwarmCommand.position_ref[0] + formation(uav_id,0);
-            y = SwarmCommand.position_ref[1] + formation(uav_id,1);
-            z = SwarmCommand.position_ref[2] + formation(uav_id,2);
-            yaw = SwarmCommand.yaw_ref + formation(uav_id,3);
-
-            cout << "Position [X Y Z] : " << x  << " [ m ] "<< y <<" [ m ] "<< z <<" [ m ] "<<endl;
+            // cout << "Position [X Y Z] : " << x  << " [ m ] "<< y <<" [ m ] "<< z <<" [ m ] "<<endl;
             cout << "Yaw : "  << yaw * 180/M_PI << " [deg] " <<endl;
             break;
 
@@ -193,26 +176,7 @@ void printf_swarm_state(int swarm_num, int uav_id, string uav_name, const drone_
 
         case drone_msg::SwarmCommand::Move:
 
-            if(SwarmCommand.Move_mode == drone_msg::SwarmCommand::XYZ_POS)
-            {
-                cout << "Command: [ Move in XYZ_POS] " <<endl;
-                cout << "Position [X Y Z] : " << SwarmCommand.position_ref[0] << " [ m ] "<< SwarmCommand.position_ref[1]<<" [ m ] "<< SwarmCommand.position_ref[2]<<" [ m ] "<<endl;
-                cout << "Yaw : "  << SwarmCommand.yaw_ref* 180/M_PI << " [deg] " <<endl;
-            }else if(SwarmCommand.Move_mode == drone_msg::SwarmCommand::XY_VEL_Z_POS)
-            {
-                cout << "Command: [ Move in XY_VEL_Z_POS] " <<endl;
-                cout << "Position [X Y Z] : " << SwarmCommand.velocity_ref[0] << " [m/s] "<< SwarmCommand.velocity_ref[1]<<" [m/s] "<< SwarmCommand.position_ref[2]<<" [ m ] "<<endl;
-                cout << "Yaw : "  << SwarmCommand.yaw_ref* 180/M_PI << " [deg] " <<endl;
-            }else if(SwarmCommand.Move_mode == drone_msg::SwarmCommand::TRAJECTORY)
-            {
-                cout << "Command: [ Move in TRAJECTORY] " <<endl;
-                cout << "Position [X Y Z] : " << SwarmCommand.position_ref[0] << " [ m ] "<< SwarmCommand.position_ref[1]<<" [ m ] "<< SwarmCommand.position_ref[2]<<" [ m ] "<<endl;
-                cout << "Velocity [X Y Z] : " << SwarmCommand.velocity_ref[0] << " [m/s] "<< SwarmCommand.velocity_ref[1]<<" [m/s] "<< SwarmCommand.velocity_ref[2]<<" [m/s] "<<endl;
-                cout << "Yaw : "  << SwarmCommand.yaw_ref* 180/M_PI << " [deg] " <<endl;
-            }else
-            {
-                cout << " wrong sub move mode. " <<endl;
-            }
+            
             break;
             
         case drone_msg::SwarmCommand::User_Mode1:

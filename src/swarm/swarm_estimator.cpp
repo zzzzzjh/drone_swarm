@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     nh.param<float>("offset_y", pos_offset[1], 0);
     nh.param<float>("offset_z", pos_offset[2], 0);
     nh.param<float>("offset_yaw", yaw_offset, 0);
-
+    nh.param("mesh_resource", mesh_resource, std::string("package://drone_swarm/config/hummingbird.mesh"));
     msg_name = uav_name + "/control";
 
     // 变量初始化
@@ -54,6 +54,8 @@ int main(int argc, char **argv)
 
     // 【发布】无人机运动轨迹
     trajectory_pub = nh.advertise<nav_msgs::Path>(uav_name + "/drone_swarm/drone_trajectory", 10);
+
+    meshPub   = nh.advertise<visualization_msgs::Marker>(uav_name + "/drone_swarm/robot", 10);  
 
     // 定时器,定时发送vision信息至飞控,保证50Hz以上
     ros::Timer timer_vision_pub = nh.createTimer(ros::Duration(0.02), timercb_vision);

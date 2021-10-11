@@ -67,9 +67,9 @@ int main(int argc, char **argv){
        }
 
        if (gazebo_client.call(drone_pos_get_3)){
-            drone_pos_0.pose = drone_pos_get_3.response.pose;
-            drone_pos_0.header.stamp = ros::Time::now();
-            drone_pos_uav0.publish(drone_pos_3);
+            drone_pos_3.pose = drone_pos_get_3.response.pose;
+            drone_pos_3.header.stamp = ros::Time::now();
+            drone_pos_uav3.publish(drone_pos_3);
         }
         else
        {
@@ -77,9 +77,9 @@ int main(int argc, char **argv){
        }
 
        if (gazebo_client.call(drone_pos_get_4)){
-            drone_pos_0.pose = drone_pos_get_4.response.pose;
-            drone_pos_0.header.stamp = ros::Time::now();
-            drone_pos_uav0.publish(drone_pos_4);
+            drone_pos_4.pose = drone_pos_get_4.response.pose;
+            drone_pos_4.header.stamp = ros::Time::now();
+            drone_pos_uav4.publish(drone_pos_4);
         }
         else
        {
@@ -87,9 +87,9 @@ int main(int argc, char **argv){
        }
 
        if (gazebo_client.call(drone_pos_get_5)){
-            drone_pos_0.pose = drone_pos_get_5.response.pose;
-            drone_pos_0.header.stamp = ros::Time::now();
-            drone_pos_uav0.publish(drone_pos_5);
+            drone_pos_5.pose = drone_pos_get_5.response.pose;
+            drone_pos_5.header.stamp = ros::Time::now();
+            drone_pos_uav5.publish(drone_pos_5);
         }
         else
        {
@@ -97,9 +97,9 @@ int main(int argc, char **argv){
        }
 
        if (gazebo_client.call(drone_pos_get_6)){
-            drone_pos_0.pose = drone_pos_get_6.response.pose;
-            drone_pos_0.header.stamp = ros::Time::now();
-            drone_pos_uav0.publish(drone_pos_6);
+            drone_pos_6.pose = drone_pos_get_6.response.pose;
+            drone_pos_6.header.stamp = ros::Time::now();
+            drone_pos_uav6.publish(drone_pos_6);
         }
         else
        {
@@ -107,9 +107,9 @@ int main(int argc, char **argv){
        }
 
        if (gazebo_client.call(drone_pos_get_7)){
-            drone_pos_0.pose = drone_pos_get_7.response.pose;
-            drone_pos_0.header.stamp = ros::Time::now();
-            drone_pos_uav0.publish(drone_pos_7);
+            drone_pos_7.pose = drone_pos_get_7.response.pose;
+            drone_pos_7.header.stamp = ros::Time::now();
+            drone_pos_uav7.publish(drone_pos_7);
         }
         else
        {

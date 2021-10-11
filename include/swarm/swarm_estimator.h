@@ -14,6 +14,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include "visualization_msgs/Marker.h"
 
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
@@ -28,6 +29,8 @@
 #define TRA_WINDOW 10                     // 发布轨迹长度
 #define TIMEOUT_MAX 0.1                     // MOCAP超时阈值
 // 变量
+static  string mesh_resource;
+
 string uav_name;                            // 无人机名字(话题前缀)
 string object_name;                         // 动作捕捉软件中设定的刚体名字
 string msg_name;
@@ -45,6 +48,7 @@ Eigen::Vector3d Euler_gazebo;               // 无人机当前姿态 - 欧拉角
 drone_msg::Message message;           // 待打印的文字消息
 nav_msgs::Odometry Drone_odom;              // 无人机里程计,用于rviz显示
 std::vector<geometry_msgs::PoseStamped> posehistory_vector_;    // 无人机轨迹容器,用于rviz显示
+visualization_msgs::Marker meshROS;
 // 订阅话题
 ros::Subscriber state_sub;
 ros::Subscriber extended_state_sub;
@@ -60,6 +64,7 @@ ros::Publisher vision_pub;
 ros::Publisher message_pub;
 ros::Publisher odom_pub;
 ros::Publisher trajectory_pub;
+ros::Publisher meshPub;
 
 void init()
 {
@@ -228,50 +233,33 @@ void timercb_drone_state(const ros::TimerEvent &e)
 
 void timercb_rviz(const ros::TimerEvent &e)
 {
-    // 发布无人机当前odometry,用于导航及rviz显示
-    nav_msgs::Odometry Drone_odom;
-    Drone_odom.header.stamp = ros::Time::now();
-    Drone_odom.header.frame_id = "world";
-    Drone_odom.child_frame_id = "base_link";
+    visualization_msgs::Marker meshROS;
 
-    Drone_odom.pose.pose.position.x = _DroneState.position[0];
-    Drone_odom.pose.pose.position.y = _DroneState.position[1];
-    Drone_odom.pose.pose.position.z = _DroneState.position[2];
+    meshROS.header.frame_id  = "world";
+    meshROS.header.stamp = ros::Time::now();
+    meshROS.ns = "mesh";
+    meshROS.id = 0;
+    meshROS.type = visualization_msgs::Marker::MESH_RESOURCE;
+    meshROS.action = visualization_msgs::Marker::ADD;
+    meshROS.pose.position.x = _DroneState.position[0];
+    meshROS.pose.position.y = _DroneState.position[1];
+    meshROS.pose.position.z = _DroneState.position[2];
 
-    // 导航算法规定 高度不能小于0
-    if (Drone_odom.pose.pose.position.z <= 0)
-    {
-        Drone_odom.pose.pose.position.z = 0.01;
-    }
+    meshROS.pose.orientation.w = _DroneState.attitude_q.w;
+    meshROS.pose.orientation.x = _DroneState.attitude_q.x;
+    meshROS.pose.orientation.y = _DroneState.attitude_q.y;
+    meshROS.pose.orientation.z = _DroneState.attitude_q.z;
 
-    Drone_odom.pose.pose.orientation = _DroneState.attitude_q;
-    Drone_odom.twist.twist.linear.x = _DroneState.velocity[0];
-    Drone_odom.twist.twist.linear.y = _DroneState.velocity[1];
-    Drone_odom.twist.twist.linear.z = _DroneState.velocity[2];
-    odom_pub.publish(Drone_odom);
+    meshROS.scale.x = 0.5;
+    meshROS.scale.y = 0.5;
+    meshROS.scale.z = 0.5;
+    meshROS.color.a = 1.0;
+    meshROS.color.r = 1.0;
+    meshROS.color.g = 0.0;
+    meshROS.color.b = 0.0;
 
-    // 发布无人机运动轨迹，用于rviz显示
-    geometry_msgs::PoseStamped drone_pos;
-    drone_pos.header.stamp = ros::Time::now();
-    drone_pos.header.frame_id = "world";
-    drone_pos.pose.position.x = _DroneState.position[0];
-    drone_pos.pose.position.y = _DroneState.position[1];
-    drone_pos.pose.position.z = _DroneState.position[2];
-
-    drone_pos.pose.orientation = _DroneState.attitude_q;
-
-    //发布无人机的位姿 和 轨迹 用作rviz中显示
-    posehistory_vector_.insert(posehistory_vector_.begin(), drone_pos);
-    if (posehistory_vector_.size() > TRA_WINDOW)
-    {
-        posehistory_vector_.pop_back();
-    }
-
-    nav_msgs::Path drone_trajectory;
-    drone_trajectory.header.stamp = ros::Time::now();
-    drone_trajectory.header.frame_id = "world";
-    drone_trajectory.poses = posehistory_vector_;
-    trajectory_pub.publish(drone_trajectory);
+    meshROS.mesh_resource = mesh_resource;
+    meshPub.publish(meshROS);
 }
 
 #endif

@@ -15,11 +15,6 @@ int main(int argc, char **argv)
     // 无人机编号 1号无人机则为1
     nh.param<int>("uav_id", uav_id, 0);
     nh.param<string>("uav_name", uav_name, "/uav");
-    //可监听到的无人机编号，目前设定为可监听到两台无人机，后期考虑可通过数组传递参数，监听任意ID的无人机
-    nh.param<int>("neighbour_id1", neighbour_id1, 0);
-    nh.param<int>("neighbour_id2", neighbour_id2, 0);
-    nh.param<string>("neighbour_name1", neighbour_name1, "/uav");
-    nh.param<string>("neighbour_name2", neighbour_name2, "/uav");
     // 控制变量
     nh.param<float>("k_p", k_p, 1.2);
     nh.param<float>("k_aij", k_aij, 0.2);
@@ -46,21 +41,19 @@ int main(int argc, char **argv)
 
     //【订阅】集群控制指令
     command_sub = nh.subscribe<drone_msg::SwarmCommand>(uav_name + "/drone_swarm/swarm_command", 10, swarm_command_cb);
+    
+    topo_sub =  nh.subscribe<drone_msg::Topology>( "/topology", 10, topology_cb);
 
-    //【订阅】本机状态信息
-    drone_state_sub = nh.subscribe<drone_msg::DroneState>(uav_name + "/drone_swarm/drone_state", 10, drone_state_cb);
-
-    //【订阅】邻居飞机的状态信息
-    if(neighbour_name1 != "/uav" || neighbour_name2 != "/uav")
+      for(int i = 0; i < swarm_num; i++) 
     {
-        nei1_state_sub = nh.subscribe<drone_msg::DroneState>(neighbour_name1 + "/drone_swarm/drone_state", 10, boost::bind(&nei_state_cb,_1, 0));
-        nei2_state_sub = nh.subscribe<drone_msg::DroneState>(neighbour_name2 + "/drone_swarm/drone_state", 10, boost::bind(&nei_state_cb,_1, 1));
+        string name_uav = "/uav"+to_string(i);
+        drone_state_sub[i] = nh.subscribe<drone_msg::DroneState>(name_uav + "/drone_swarm/drone_state", 10, drone_state_cb[i]); //【发布】阵型
     }
 
     // 【发布】位置/速度/加速度期望值 坐标系 ENU系
     //  本话题要发送至飞控(通过Mavros功能包 /plugins/setpoint_raw.cpp发送), 对应Mavlink消息为SET_POSITION_TARGET_LOCAL_NED (#84), 对应的飞控中的uORB消息为position_setpoint_triplet.msg
     setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>(uav_name + "/mavros/setpoint_raw/local", 10);
-
+    setpoint_raw_local = nh.advertise<geometry_msgs::PointStamped>(uav_name + "/setpoint", 10);
     // 【发布】用于地面站显示的提示消息
     message_pub = nh.advertise<drone_msg::Message>(uav_name + "/drone_swarm/message/main", 10);
 
@@ -92,7 +85,8 @@ int main(int argc, char **argv)
         }
 
         // Check for geo fence: If drone is out of the geo fence, it will land now.
-        if(check_failsafe() == 1)
+        // if(check_failsafe() == 1)
+        if(0)
         {
             Command_Now.Mode = drone_msg::SwarmCommand::Land;
         }
@@ -107,14 +101,14 @@ int main(int argc, char **argv)
             // 设定yaw_ref=999时，切换offboard模式，并解锁
             if(Command_Now.yaw_ref == 999)
             {
-                if(_DroneState.mode != "OFFBOARD")
+                if(_DroneState[uav_id].mode != "OFFBOARD")
                 {
                     mode_cmd.request.custom_mode = "OFFBOARD";
                     set_mode_client.call(mode_cmd);
                     pub_message(message_pub, drone_msg::Message::NORMAL, msg_name, "Setting to OFFBOARD Mode...");
                 }
 
-                if(!_DroneState.armed)
+                if(!_DroneState[uav_id].armed)
                 {
                     arm_cmd.request.value = true;
                     arming_client.call(arm_cmd);
@@ -130,11 +124,11 @@ int main(int argc, char **argv)
             if (Command_Last.Mode != drone_msg::SwarmCommand::Takeoff)
             {
                 // 设定起飞位置
-                Takeoff_position[0] = _DroneState.position[0];
-                Takeoff_position[1] = _DroneState.position[1];
-                Takeoff_position[2] = _DroneState.position[2];
+                Takeoff_position[0] = _DroneState[uav_id].position[0];
+                Takeoff_position[1] = _DroneState[uav_id].position[1];
+                Takeoff_position[2] = _DroneState[uav_id].position[2];
                 state_sp = Eigen::Vector3d(Takeoff_position[0],Takeoff_position[1],Takeoff_position[2] + Takeoff_height);
-                yaw_sp              = _DroneState.attitude[2]; 
+                yaw_sp              = _DroneState[uav_id].attitude[2]; 
             }
             send_pos_setpoint(state_sp, yaw_sp);
             
@@ -145,12 +139,12 @@ int main(int argc, char **argv)
 
             if (Command_Last.Mode != drone_msg::SwarmCommand::Hold)
             {
-                Command_Now.position_ref[0] = _DroneState.position[0];
-                Command_Now.position_ref[1] = _DroneState.position[1];
-                Command_Now.position_ref[2] = _DroneState.position[2];
-                Command_Now.yaw_ref         = _DroneState.attitude[2]; //rad
+                Command_Now.position_ref[0] = _DroneState[uav_id].position[0];
+                Command_Now.position_ref[1] = _DroneState[uav_id].position[1];
+                Command_Now.position_ref[2] = _DroneState[uav_id].position[2];
+                Command_Now.yaw_ref         = _DroneState[uav_id].attitude[2]; //rad
 
-                state_sp = Eigen::Vector3d(_DroneState.position[0],_DroneState.position[1],_DroneState.position[2]);
+                state_sp = Eigen::Vector3d(_DroneState[uav_id].position[0],_DroneState[uav_id].position[1],_DroneState[uav_id].position[2]);
             }
             send_pos_setpoint(state_sp, Command_Now.yaw_ref);
 
@@ -160,14 +154,14 @@ int main(int argc, char **argv)
         case drone_msg::SwarmCommand::Land:
             if (Command_Last.Mode != drone_msg::SwarmCommand::Land)
             {
-                Command_Now.position_ref[0] = _DroneState.position[0];
-                Command_Now.position_ref[1] = _DroneState.position[1];
-                Command_Now.yaw_ref         = _DroneState.attitude[2]; //rad
+                Command_Now.position_ref[0] = _DroneState[uav_id].position[0];
+                Command_Now.position_ref[1] = _DroneState[uav_id].position[1];
+                Command_Now.yaw_ref         = _DroneState[uav_id].attitude[2]; //rad
             }
 
-            if(_DroneState.position[2] > Disarm_height)
+            if(_DroneState[uav_id].position[2] > Disarm_height)
             {
-                Command_Now.position_ref[2] = _DroneState.position[2] - Land_speed * 0.02 ;
+                Command_Now.position_ref[2] = _DroneState[uav_id].position[2] - Land_speed * 0.02 ;
                 Command_Now.velocity_ref[0] = 0.0;
                 Command_Now.velocity_ref[1] =  0.0;
                 Command_Now.velocity_ref[2] = - Land_speed; //Land_speed
@@ -193,13 +187,13 @@ int main(int argc, char **argv)
         case drone_msg::SwarmCommand::Disarm:
 
             pub_message(message_pub, drone_msg::Message::WARN, msg_name, "Disarm: switch to MANUAL flight mode");
-            if(_DroneState.mode == "OFFBOARD")
+            if(_DroneState[uav_id].mode == "OFFBOARD")
             {
                 mode_cmd.request.custom_mode = "MANUAL";
                 set_mode_client.call(mode_cmd);
             }
 
-            if(_DroneState.armed)
+            if(_DroneState[uav_id].armed)
             {
                 arm_cmd.request.value = false;
                 arming_client.call(arm_cmd);
@@ -207,27 +201,58 @@ int main(int argc, char **argv)
             break;
 
         case drone_msg::SwarmCommand::Position_Control:
+            topo_count = 0;
+            state_sp[0] = pos_drone[uav_id][0];
+            state_sp[1] = pos_drone[uav_id][1];
+            state_sp[2] =  pos_drone[uav_id][2];
+            state_sp_plus[0]=0;
+            state_sp_plus[1]=0;
+            state_sp_plus[2]=0;
+            
+             for(int i = 0; i < swarm_num; i++) {
+                 if(i != uav_id && topo.get(i, uav_id)){
+                     pos_rel[i] = pos_drone[i] - pos_drone[uav_id];
+                     Eigen::Vector3d force = 0.2*(elasticity(pos_rel[i],Command_Now.range,Command_Now.direction));
+                     state_sp_plus[0] +=  force[0];
+                     state_sp_plus[1] +=  force[1];
+                     state_sp_plus[2] +=  force[2];
+                     topo_count ++;
+                 }
+             }
+             if(topo_count){
+                state_sp[0] += state_sp_plus[0]/topo_count;
+                state_sp[1] += state_sp_plus[1]/topo_count;
+                state_sp[2] += state_sp_plus[2]/topo_count;
+             }
 
-            //　此控制方式即为　集中式控制，　直接由地面站指定期望位置点
-            //  虚拟领机位置 + 队形偏移量
-            // calculate relative distance
-            pos_rel[0] = pos_nei[0] - pos_drone;
-           pos_rel[1] = pos_nei[1] - pos_drone;
+             p.header.frame_id="world";
+             p.point.x = state_sp[0];
+             p.point.y = state_sp[1];
+             p.point.z = state_sp[2];
 
-            time_circle= time_circle+0.03;
+             setpoint_raw_local.publish(p);
+
+            //  if(uav_id ==1){
+            //       for(int i = 0; i<swarm_num;i++){
+            //           for(int j= 0; j<swarm_num; j++){
+            //               cout<<(int)topo.get(i,j);
+            //           }
+            //           cout<<endl;
+            //     }
+            //  }  
+            // time_circle= time_circle+0.03;
             // state_sp[0] = Command_Now.position_ref[0] + Command_Now.swarm_size * formation_separation(uav_id,0) - gazebo_offset[0]+7 * sin(time_circle);
             // state_sp[1] = Command_Now.position_ref[1] + Command_Now.swarm_size * formation_separation(uav_id,1) - gazebo_offset[1]+7 * cos(time_circle);
             // state_sp[2] = Command_Now.position_ref[2] + Command_Now.swarm_size * formation_separation(uav_id,2) - gazebo_offset[2];
-            state_sp[0] = pos_drone[0] +  0.09*(elasticity(pos_rel[0],0,Command_Now.position_ref[0]) + elasticity(pos_rel[1],0,Command_Now.position_ref[0]));
-            state_sp[1] = pos_drone[1] +  0.09*(elasticity(pos_rel[0],1,Command_Now.position_ref[1]) + elasticity(pos_rel[1],1,Command_Now.position_ref[1]));
+            // state_sp[0] = pos_drone[0] +  0.09*(elasticity(pos_rel[0],0,Command_Now.position_ref[0]) + elasticity(pos_rel[1],0,Command_Now.position_ref[0]));
+            // state_sp[1] = pos_drone[1] +  0.09*(elasticity(pos_rel[0],1,Command_Now.position_ref[1]) + elasticity(pos_rel[1],1,Command_Now.position_ref[1]));
             // state_sp[2] = pos_drone[2] +  0.8*(vel_incre(pos_rel[0],0)[2] + vel_incre(pos_rel[1],0)[2]);
             // state_sp[0] = pos_drone[0] ;
             // state_sp[1] = pos_drone[1];
-            state_sp[2] = pos_drone[2] +  0.09*(elasticity(pos_rel[0],2,Command_Now.position_ref[2]) + elasticity(pos_rel[1],2,Command_Now.position_ref[2])) ;
+            // state_sp[2] = pos_drone[2] +  0.09*(elasticity(pos_rel[0],2,Command_Now.position_ref[2]) + elasticity(pos_rel[1],2,Command_Now.position_ref[2])) ;
             yaw_sp = Command_Now.yaw_ref;
             send_pos_setpoint(state_sp, yaw_sp);
             // cout << "curPos" << Command_Now.position_ref[0] << " " << Command_Now.position_ref[1] << " " << Command_Now.position_ref[2] << endl;
-             cout << "2pos:" << state_sp[0] << " " << state_sp[1] << " " <<state_sp[2] << endl;
             break;
 
         case drone_msg::SwarmCommand::Velocity_Control:
@@ -236,18 +261,18 @@ int main(int argc, char **argv)
             //　一阶积分器分布式编队控制算法，可追踪时变轨迹，此处采用双向环的拓扑结构，且仅部分无人机可收到地面站发来的虚拟领队消息
             //　参考文献：Multi-Vehicle consensus with a time-varying reference state 公式(11) - (12)
             //　目前该算法有一定控制偏差，可能是由于参数选取不是最佳导致的
-           time_circle= time_circle+0.005;
+
           // pos_rel_target[0]= Command_Now.position_ref[0] +5 * sin(time_circle) - pos_drone[0]+0.7*Command_Now.swarm_size * formation_separation(uav_id,0);
            //pos_rel_target[1]= Command_Now.position_ref[1] +5 * cos(time_circle)- pos_drone[1]+ 0.7*Command_Now.swarm_size * formation_separation(uav_id,1);
 
-           pos_rel_target[0]= Command_Now.position_ref[0]  - pos_drone[0]+0.7*Command_Now.swarm_size * formation_separation(uav_id,0);
-           pos_rel_target[1]= Command_Now.position_ref[1]  - pos_drone[1]+ 0.7*Command_Now.swarm_size * formation_separation(uav_id,1);
+        //    pos_rel_target[0]= Command_Now.position_ref[0]  - pos_drone[0]+0.7*Command_Now.swarm_size * formation_separation(uav_id,0);
+        //    pos_rel_target[1]= Command_Now.position_ref[1]  - pos_drone[1]+ 0.7*Command_Now.swarm_size * formation_separation(uav_id,1);
 
 
 
-           pos_rel_target[2]= Command_Now.position_ref[2]  - pos_drone[2];
-           pos_rel[0] = pos_nei[0] - pos_drone;
-           pos_rel[1] = pos_nei[1] - pos_drone;
+        //    pos_rel_target[2]= Command_Now.position_ref[2]  - pos_drone[2];
+        //    pos_rel[0] = pos_nei[0] - pos_drone;
+        //    pos_rel[1] = pos_nei[1] - pos_drone;
             // yita = 1/ ((float)swarm_num * k_aij + k_p);
 
             // state_sp[0] = - yita * k_aij * ( vel_nei[0][0] - k_gamma *((pos_drone[0] - pos_nei[0][0]) - ( formation_separation(uav_id,0) -  formation_separation(neighbour_id1,0)))) 
@@ -256,19 +281,19 @@ int main(int argc, char **argv)
             // state_sp[1] = - yita * k_aij * ( vel_nei[0][1] - k_gamma *((pos_drone[1] - pos_nei[0][1]) - ( formation_separation(uav_id,1) -  formation_separation(neighbour_id1,1)))) 
             //                 - yita * k_aij * ( vel_nei[1][1] - k_gamma *((pos_drone[1] - pos_nei[1][1]) - ( formation_separation(uav_id,1) -  formation_separation(neighbour_id2,1))))
             //                 + yita * k_p * ( Command_Now.velocity_ref[1] - k_gamma * (pos_drone[1] - Command_Now.position_ref[1] - formation_separation(uav_id,1)));
-            state_sp[2] = Command_Now.position_ref[2] + formation_separation(uav_id,2);
-             yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
+            // state_sp[2] = Command_Now.position_ref[2] + formation_separation(uav_id,2);
+            //  yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
 
-            //following the virtual leader by  potential field function
-            state_sp[0] = 0.5*vel_incre(pos_rel_target,1)[0] + 0.8*(vel_incre(pos_rel[0],0)[0] + vel_incre(pos_rel[1],0)[0]);
-            state_sp[1] = 0.5*vel_incre(pos_rel_target,1)[1] + 0.8*(vel_incre(pos_rel[0],0)[1] + vel_incre(pos_rel[1],0)[1]);
+            // //following the virtual leader by  potential field function
+            // state_sp[0] = 0.5*vel_incre(pos_rel_target,1)[0] + 0.8*(vel_incre(pos_rel[0],0)[0] + vel_incre(pos_rel[1],0)[0]);
+            // state_sp[1] = 0.5*vel_incre(pos_rel_target,1)[1] + 0.8*(vel_incre(pos_rel[0],0)[1] + vel_incre(pos_rel[1],0)[1]);
             
-            if( abs(state_sp[0])>0.8){
-                state_sp[0]=state_sp[0]/abs(state_sp[0])*0.8;
-            }
-            if( abs(state_sp[1])>0.8){
-                state_sp[1]=state_sp[1]/abs(state_sp[1])*0.8;
-            }
+            // if( abs(state_sp[0])>0.8){
+            //     state_sp[0]=state_sp[0]/abs(state_sp[0])*0.8;
+            // }
+            // if( abs(state_sp[1])>0.8){
+            //     state_sp[1]=state_sp[1]/abs(state_sp[1])*0.8;
+            // }
             yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
             send_vel_xy_pos_z_setpoint(state_sp, yaw_sp);
             cout << "2pos:" << state_sp[0] << " " << state_sp[1] << " " << time_circle<< endl;
@@ -282,19 +307,8 @@ int main(int argc, char **argv)
             //　此处也可以根据自己的算法改为　分布式控制
             //　需要增加积分项　否则会有静差
             
-            accel_sp[0] =  2.5 * (Command_Now.position_ref[0] + formation_separation(uav_id,0) - pos_drone[0]) + 3.0 * (Command_Now.velocity_ref[0] - vel_drone[0]);
-            accel_sp[1] =  2.5 * (Command_Now.position_ref[1] + formation_separation(uav_id,1) - pos_drone[1]) + 3.0 * (Command_Now.velocity_ref[1] - vel_drone[1]);
-            accel_sp[2] =  2.0 * (Command_Now.position_ref[2] + formation_separation(uav_id,2) - pos_drone[2]) + 3.0 * (Command_Now.velocity_ref[2] - vel_drone[2]) + 9.8;
-            
+           
             //　从加速度归一化到油门
-            throttle_sp =  accelToThrottle(accel_sp, 1.0, 20.0);
-
-            state_sp[0] = throttle_sp[0] ;
-            state_sp[1] = throttle_sp[1] ;
-            state_sp[2] = throttle_sp[2] ;
-
-            yaw_sp = Command_Now.yaw_ref + formation_separation(uav_id,3);
-            send_acc_xyz_setpoint(state_sp, yaw_sp);
 
             break;
 
@@ -302,52 +316,6 @@ int main(int argc, char **argv)
         case drone_msg::SwarmCommand::Move:
 
             //　此控制方式即为　期望位置点控制, 仅针对单个飞机
-            if(Command_Now.Move_mode == drone_msg::SwarmCommand::XYZ_POS)
-            {
-                state_sp[0] = Command_Now.position_ref[0];
-                state_sp[1] = Command_Now.position_ref[1];
-                state_sp[2] = Command_Now.position_ref[2];
-                yaw_sp = Command_Now.yaw_ref;
-                send_pos_setpoint(state_sp, yaw_sp);
-            }else if(Command_Now.Move_mode == drone_msg::SwarmCommand::XY_VEL_Z_POS)
-            {
-                state_sp[0] = Command_Now.velocity_ref[0];
-                state_sp[1] = Command_Now.velocity_ref[1];
-                state_sp[2] = Command_Now.position_ref[2];
-                yaw_sp = Command_Now.yaw_ref;
-                send_vel_xy_pos_z_setpoint(state_sp, yaw_sp);
-
-                // 机体系控制,暂缺
-                if(false)
-                {
-                    //xy velocity mode
-                    float d_vel_body[2] = {Command_Now.velocity_ref[0], Command_Now.velocity_ref[1]};         //the desired xy velocity in Body Frame
-                    float d_vel_enu[2];                   //the desired xy velocity in NED Frame
-
-                    //根据无人机当前偏航角进行坐标系转换
-                    rotation_yaw(_DroneState.attitude[2], d_vel_body, d_vel_enu);
-                    Command_Now.position_ref[0] = 0;
-                    Command_Now.position_ref[1] = 0;
-                    Command_Now.position_ref[2] = Command_Now.position_ref[2];
-                    Command_Now.velocity_ref[0] = d_vel_enu[0];
-                    Command_Now.velocity_ref[1] = d_vel_enu[1];
-                    Command_Now.velocity_ref[2] = 0.0;
-                    state_sp = Eigen::Vector3d(Command_Now.velocity_ref[0],Command_Now.velocity_ref[1],Command_Now.position_ref[2]);
-                    yaw_sp = _DroneState.attitude[2] + Command_Now.yaw_ref;
-                }
-            }else if(Command_Now.Move_mode == drone_msg::SwarmCommand::TRAJECTORY)
-            {
-                state_sp << Command_Now.position_ref[0],Command_Now.position_ref[1],Command_Now.position_ref[2];
-                // z轴定高飞行，速度为0
-                state_sp_extra << Command_Now.velocity_ref[0],Command_Now.velocity_ref[1], 0.0 ;
-                yaw_sp = Command_Now.yaw_ref;
-                send_pos_vel_xyz_setpoint(state_sp , state_sp_extra, yaw_sp);
-            }
-            else
-            {
-                pub_message(message_pub, drone_msg::Message::ERROR, msg_name, "Wrong swarm command!");
-            }
-
             break;
 
         case drone_msg::SwarmCommand::User_Mode1:
